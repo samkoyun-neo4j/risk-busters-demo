@@ -1,0 +1,268 @@
+{
+  "title": "NeoFund Investment Portfolio Demo",
+  "version": "2.4",
+  "settings": {
+    "pagenumber": 0,
+    "editable": true,
+    "fullscreenEnabled": false,
+    "parameters": {
+      "neodash_": "Tobacco",
+      "neodash_exc_category": "Climate",
+      "neodash_fund_name": "NEO FUND",
+      "neodash_fund_name_display": "NEO FUND",
+      "neodash_issuer": "MICROSOFT CORP."
+    },
+    "theme": "light"
+  },
+  "pages": [
+    {
+      "title": "Exclusion report",
+      "reports": [
+        {
+          "id": "51e90b93-3e32-4864-9852-2b357412f931",
+          "title": "Exclusion Category",
+          "query": "MATCH ()-[n:`EXCLUDES_ENTITY`]->() \nRETURN DISTINCT n.`mainCategory` as category\nORDER BY category",
+          "width": 4,
+          "height": 7,
+          "x": 0,
+          "y": 2,
+          "type": "table",
+          "selection": {},
+          "settings": {
+            "type": "Relationship Property",
+            "entityType": "EXCLUDES_ENTITY",
+            "propertyType": "mainCategory",
+            "propertyTypeDisplay": "mainCategory",
+            "parameterName": "neodash_excludes_entity_maincategory",
+            "actionsRules": [
+              {
+                "condition": "Click",
+                "field": "category",
+                "value": "category",
+                "customization": "set variable",
+                "customizationValue": "exc_category"
+              }
+            ],
+            "styleRules": [
+              {
+                "field": "category",
+                "condition": "=",
+                "value": "",
+                "customization": "row color",
+                "customizationValue": "black"
+              }
+            ]
+          },
+          "schema": []
+        },
+        {
+          "id": "3db5dac8-2e4c-4c89-afac-808086cad761",
+          "title": "Fund list",
+          "query": "MATCH (f:NeoFund)\nRETURN f.name\n\n",
+          "width": 4,
+          "height": 2,
+          "x": 0,
+          "y": 0,
+          "type": "select",
+          "selection": {},
+          "settings": {
+            "type": "Custom Query",
+            "entityType": "fund_name",
+            "parameterName": "neodash_fund_name"
+          },
+          "schema": []
+        },
+        {
+          "id": "9b35a675-10ee-4a51-b45a-1ecd792a2eba",
+          "title": "Full list for comparison",
+          "query": "CALL () {\n  MATCH (n:Fund)-[h:HOLDS WHERE h.amount>1000000]->(a:Asset)-[:IS_ISSUED_BY]->(e)-[:IS_SIMILAR_TO]-(exc:excEntity)<-[r:EXCLUDES_ENTITY]-(of)\n  WHERE r.mainCategory = $neodash_exc_category\n  WITH a.securityId as sid, a.issuerName as asset, a.class as assetClass, sum(h.amount) as Amount, e, exc, COUNT(r) AS numExclusions, COLLECT(of.name) as excBy, collect(distinct r.subCategory) as subCategory\n  MATCH (exc)--(c:Country)\n  WITH sid, asset, assetClass, Amount, e, exc, numExclusions, COLLECT(c.name) as relECountrs, excBy, subCategory\n  MATCH (e)--(c:Country)\n  RETURN sid as `Security ID`, asset as Issuer, assetClass as `Asset Class`, Amount as `Invested Amount`, 'DIRECT' as `Connected Type`,e.name as `Connected Entity`, COLLECT(c.name) as `Connected Countries`, exc.name as `Excluded Entity`, relECountrs as `Related Countries`, numExclusions AS `Number of Exclusions`, excBy AS `Excluded By`, subCategory\nUNION ALL\n  MATCH (n:Fund)-[h:HOLDS WHERE h.amount>1000000]->(a:Asset)-[:IS_ISSUED_BY]->(e)-[:IS_PART_OF*]-(matEnt:Entity)-[:IS_SIMILAR_TO]-(exc:excEntity)<-[r:EXCLUDES_ENTITY]-(of)\n  WHERE r.mainCategory = $neodash_exc_category\n  WITH a.securityId as sid, a.issuerName as asset, a.class as assetClass, sum(h.amount) as Amount, matEnt, exc, COUNT(r) AS numExclusions, COLLECT(of.name) as excBy, collect(distinct r.subCategory) as subCategory\n  MATCH (exc)--(c:Country)\n  WITH sid, asset, assetClass, Amount, matEnt, exc, numExclusions, COLLECT(c.name) as relECountrs, excBy, subCategory\n  MATCH (matEnt)--(c:Country)\n  RETURN sid as `Security ID`, asset as Issuer, assetClass as `Asset Class`, Amount as `Invested Amount`, 'INDIRECT' as `Connected Type`, matEnt.name as `Connected Entity`, COLLECT(c.name) as `Connected Countries`, exc.name as `Excluded Entity`, relECountrs as `Related Countries`, numExclusions AS `Number of Exclusions`, excBy AS `Excluded By`, subCategory\n}\nRETURN `Security ID`, Issuer, `Asset Class`, `Invested Amount`, `Connected Type`, `Connected Entity`, `Connected Countries`, `Excluded Entity`, `Related Countries`, `Number of Exclusions`, `Excluded By`, subCategory\n// RETURN `Security ID`, Issuer, `Asset Class`, `Invested Amount`, `Connected Type`, `Excluded Entity`, `Number of Exclusions`, `Excluded By`, subCategory\nORDER BY `Invested Amount` DESC\n\n\n",
+          "width": 24,
+          "height": 7,
+          "x": 0,
+          "y": 13,
+          "type": "table",
+          "selection": {},
+          "settings": {}
+        },
+        {
+          "id": "e8d3b4cf-306d-4a97-b382-6efe1bb5b4d3",
+          "title": "Top invested issuers that are DIRECTLY excluded by other funds",
+          "query": "MATCH p=(n:Fund{name:$neodash_fund_name})-[h:HOLDS]->(a:Asset)-[:IS_ISSUED_BY]->(e)-[:IS_SIMILAR_TO]-(exc:excEntity)<-[r:EXCLUDES_ENTITY]-(of)\nWHERE r.mainCategory = $neodash_exc_category\nRETURN e.name as `Issuer`, h.amount as `Invested Amount`, exc.name as `Excluded Companies`, count(r) as `Num of Exclusions`, collect(DISTINCT of.name) as `Excluded by`, collect(DISTINCT r.subCategory) as `subCategory`\nORDER BY `Invested Amount` DESC",
+          "width": 14,
+          "height": 4,
+          "x": 4,
+          "y": 0,
+          "type": "table",
+          "selection": {},
+          "settings": {
+            "actionsRules": [
+              {
+                "condition": "Click",
+                "field": "Issuer",
+                "value": "Issuer",
+                "customization": "set variable",
+                "customizationValue": "issuer"
+              }
+            ],
+            "columnWidths": "[2,1,2,0.6,1,1]"
+          }
+        },
+        {
+          "id": "92f98f05-d554-45c1-82f9-2a30b36d4201",
+          "title": "Top invested issuers that are INDIRECTLY excluded by other funds",
+          "query": "// INDIRECT\nMATCH p=(n:Fund{name:$neodash_fund_name})-[h:HOLDS]->(a:Asset)-[:IS_ISSUED_BY]->(e)-[:IS_PART_OF*]-(matEnt:Entity)-[:IS_SIMILAR_TO]-(exc:excEntity)<-[r:EXCLUDES_ENTITY]-(of)\nWHERE r.mainCategory = $neodash_exc_category\nRETURN e.name as `Issuer`, h.amount as `Invested Amount`, collect(DISTINCT exc.name) as `Excluded Companies`, count(r) as `Num of Exclusions`, collect(DISTINCT of.name) as `Excluded by`, collect(DISTINCT r.subCategory) as `subCategory`\nORDER BY `Invested Amount` DESC\n\n\n",
+          "width": 14,
+          "height": 5,
+          "x": 4,
+          "y": 4,
+          "type": "table",
+          "selection": {},
+          "settings": {
+            "actionsRules": [
+              {
+                "condition": "Click",
+                "field": "Issuer",
+                "value": "Issuer",
+                "customization": "set variable",
+                "customizationValue": "issuer"
+              }
+            ],
+            "columnWidths": "[2,1,2,0.6,1,1]"
+          }
+        },
+        {
+          "id": "4ebb9b7f-eca7-4c45-8129-fe6c0af16b1f",
+          "title": "Issuer exclusion graph",
+          "query": "MATCH (n:Issuer {name:$neodash_issuer})\nOPTIONAL MATCH indirect=(n)-[:IS_PART_OF*]-(e:Entity)-[:IS_SIMILAR_TO]->(:excEntity)<-[r1:EXCLUDES_ENTITY {mainCategory:$neodash_exc_category}]-(:Fund)\nOPTIONAL MATCH direct=(:Fund)-[r2:EXCLUDES_ENTITY {mainCategory:$neodash_exc_category}]->(:excEntity)<-[:IS_SIMILAR_TO]-(n)\nRETURN direct, indirect\n\n\n\n",
+          "width": 6,
+          "height": 9,
+          "x": 18,
+          "y": 0,
+          "type": "graph",
+          "selection": {
+            "Entity": "name",
+            "Issuer": "name",
+            "excEntity": "name",
+            "Fund": "name"
+          },
+          "settings": {},
+          "schema": [
+            [
+              "Entity",
+              "legalName",
+              "entityType",
+              "entitySubType",
+              "name",
+              "entityId",
+              "leiId",
+              "yearFounded",
+              "shortName",
+              "entityOtherName"
+            ],
+            [
+              "Issuer",
+              "legalName",
+              "entityType",
+              "entitySubType",
+              "name",
+              "entityId",
+              "leiId",
+              "yearFounded",
+              "shortName",
+              "entityOtherName"
+            ],
+            [
+              "excEntity",
+              "name"
+            ],
+            [
+              "Fund",
+              "name"
+            ]
+          ]
+        }
+      ]
+    },
+    {
+      "title": "Sanction report",
+      "reports": [
+        {
+          "id": "241153ce-f941-4f11-9426-9da1eec6f219",
+          "title": "Fund list",
+          "query": "MATCH (f:Fund)-[:HOLDS]->()\nRETURN DISTINCT f.name\n\n\n\n",
+          "width": 5,
+          "height": 8,
+          "x": 0,
+          "y": 0,
+          "type": "select",
+          "selection": {},
+          "settings": {
+            "type": "Custom Query",
+            "entityType": "fund_name",
+            "parameterName": "neodash_fund_name",
+            "actionsRules": [
+              {
+                "condition": "Click",
+                "field": "f.name",
+                "value": "f.name",
+                "customization": "set variable",
+                "customizationValue": "fund_name"
+              }
+            ]
+          },
+          "schema": []
+        },
+        {
+          "id": "e232e841-12e1-417c-9a62-00b323be89d2",
+          "title": "Assets issued by sanctioned entities",
+          "query": "CALL () {\n  MATCH (n:Fund{name:$neodash_fund_name})-[h:HOLDS WHERE h.amount>1000]->(a:Asset)-[:IS_ISSUED_BY]->(e)-[:IS_SIMILAR_TO]-(sanc:sancEntity)<-[s:SANCTIONS]-(committee)\n  WITH a.securityId as sid, a.class as assetClass, a.issuerName as issuer, h.amount as Amount, e, sanc, COUNT(s) AS numSanctions, COLLECT(s.listingInfo) As sancDetails, committee\n  MATCH (e)--(c:Country)\n  RETURN sid as `Security ID`, issuer as `Issuer`, assetClass as `Asset Class`, Amount as `Invested Amount`, 'DIRECT' as `Connected Type`,e.name as `Connected Entity`, COLLECT(c.name) as `Connected Countries`, sanc.name as `Sanctioned Entity`, sanc.address as `Sanctioned Address`, numSanctions AS `Number of Sanctions`, sancDetails AS `Details of Sanctions`, committee.name as `Sanctioning Committee`\nUNION ALL\n  MATCH (n:Fund{name:$neodash_fund_name})-[h:HOLDS WHERE h.amount>1000]->(a:Asset)-[:IS_ISSUED_BY]->(e)-[:IS_PART_OF*]-(matEnt:Entity)-[:IS_SIMILAR_TO]-(sanc:sancEntity)-[s:SANCTIONS]-(committee)\n  WITH a.securityId as sid, a.class as assetClass, a.issuerName as issuer, h.amount as Amount, matEnt, sanc, COUNT(s) AS numSanctions, COLLECT(s.listingInfo) As sancDetails, committee\n  MATCH (matEnt)--(c:Country)\n  RETURN sid as `Security ID`, issuer as `Issuer`, assetClass as `Asset Class`, Amount as `Invested Amount`, 'INDIRECT' as `Connected Type`,matEnt.name as `Connected Entity`, COLLECT(c.name) as `Connected Countries`, sanc.name as `Sanctioned Entity`, sanc.address as `Sanctioned Address`, numSanctions AS `Number of Sanctions`, sancDetails AS `Details of Sanctions`, committee.name as `Sanctioning Committee`\n}\n//RETURN `Security ID`, `Issuer`, `Asset Class`, `Invested Amount`, `Connected Type`, `Connected Entity`, `Connected Countries`, `Sanctioned Entity`, `Sanctioned Address`, `Details of Sanctions`, `Sanctioned By`\nRETURN `Security ID`, `Issuer`, `Asset Class`, `Invested Amount`, `Connected Type`, `Sanctioned Entity`, `Details of Sanctions`, `Sanctioning Committee`\nORDER BY `Invested Amount` DESC\n\n\n",
+          "width": 19,
+          "height": 8,
+          "x": 5,
+          "y": 0,
+          "type": "table",
+          "selection": {},
+          "settings": {}
+        },
+        {
+          "id": "2027928a-bdd1-49ec-9878-c6fb00652101",
+          "title": "Full list for comparison",
+          "query": "CALL () {\n  MATCH (n:Fund)-[h:HOLDS WHERE h.amount>1000]->(a:Asset)-[:IS_ISSUED_BY]->(e)-[:IS_SIMILAR_TO]-(sanc:sancEntity)<-[s:SANCTIONS]-(committee)\n  WITH a.securityId as sid, a.class as assetClass, a.issuerName as issuer, sum(h.amount) as Amount, e, sanc, COUNT(s) AS numSanctions, COLLECT(s.listingInfo) As sancDetails, committee\n  MATCH (e)--(c:Country)\n  RETURN sid as `Security ID`, issuer as `Issuer`, assetClass as `Asset Class`, Amount as `Invested Amount`, 'DIRECT' as `Connected Type`,e.name as `Connected Entity`, COLLECT(c.name) as `Connected Countries`, sanc.name as `Sanctioned Entity`, sanc.address as `Sanctioned Address`, numSanctions AS `Number of Sanctions`, sancDetails AS `Details of Sanctions`, committee.name as `Sanctioned By`\nUNION ALL\n  MATCH (n:Fund)-[h:HOLDS WHERE h.amount>1000]->(a:Asset)-[:IS_ISSUED_BY]->(e)-[:IS_PART_OF*]-(matEnt:Entity)-[:IS_SIMILAR_TO]-(sanc:sancEntity)-[s:SANCTIONS]-(committee)\n  WITH a.securityId as sid, a.class as assetClass, a.issuerName as issuer, sum(h.amount) as Amount, matEnt, sanc, COUNT(s) AS numSanctions, COLLECT(s.listingInfo) As sancDetails, committee\n  MATCH (matEnt)--(c:Country)\n  RETURN sid as `Security ID`, issuer as `Issuer`, assetClass as `Asset Class`, Amount as `Invested Amount`, 'INDIRECT' as `Connected Type`,matEnt.name as `Connected Entity`, COLLECT(c.name) as `Connected Countries`, sanc.name as `Sanctioned Entity`, sanc.address as `Sanctioned Address`, numSanctions AS `Number of Sanctions`, sancDetails AS `Details of Sanctions`, committee.name as `Sanctioned By`\n}\nRETURN `Security ID`, `Issuer`, `Asset Class`, `Invested Amount`, `Connected Type`, `Connected Entity`, `Connected Countries`, `Sanctioned Entity`, `Sanctioned Address`, `Details of Sanctions`, `Sanctioned By`\n// RETURN `Security ID`, `Issuer`, `Asset Class`, `Invested Amount`, `Connected Type`, `Sanctioned Entity`, `Details of Sanctions`, `Sanctioned By`\nORDER BY `Invested Amount` DESC\n\n\n\n\n\n",
+          "width": 24,
+          "height": 7,
+          "x": 0,
+          "y": 12,
+          "type": "table",
+          "selection": {},
+          "settings": {}
+        }
+      ]
+    }
+  ],
+  "parameters": {},
+  "extensions": {
+    "active": true,
+    "activeReducers": [
+      "DASHBOARD/EXTENSIONS/QUERY_TRANSLATOR/"
+    ],
+    "advanced-charts": {
+      "active": true
+    },
+    "styling": {
+      "active": true
+    },
+    "actions": {
+      "active": true
+    },
+    "query-translator": {
+      "active": true
+    },
+    "forms": {
+      "active": true
+    },
+    "access-control-management": {
+      "active": true
+    }
+  },
+  "uuid": "24b37c40-e8b7-467b-9bac-329adf6ae230"
+}

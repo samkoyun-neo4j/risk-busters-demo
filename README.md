@@ -13,6 +13,8 @@ Business problem statement: "As an investment/Compliance analyst, I want to find
 
 ### Insight 1. Find all the relevant information about a company we invest.
 
+![insight 1: Tata motors](images/Insight1.png)
+
 1. In Bloom, ask a question; "Show me TATA MOTORS LTD. overview"
 
 2. Expand on IS_SIMILAR_TO(Full text index score) relationship (siloed DB, 3rd party vendor DB, open source DB) → Exclusion info from open source data
@@ -22,6 +24,8 @@ Business problem statement: "As an investment/Compliance analyst, I want to find
 4. Explain how all connected data is represented in one scene easily
 
 ### Insight 2. Do we invest in companies others excluding from their portfolios for Climate issue?
+
+![insight 2: Climate direct exclusion](images/Insight2.png)
 
 While Neo Fund doesn't exclude any companies from their portfolio for climate issue, it is becoming more important. It is in our best interest to start considering this when making decisions and identify any high risk companies we currently invest.
 
@@ -37,6 +41,8 @@ While Neo Fund doesn't exclude any companies from their portfolio for climate is
 
 ### Insight 3. Do we invest in companies whose subsidiaries or parent companies are involved in dealing weapons?
 
+![insight 3: Weapon indirect exclusion](images/Insight3.png)
+
 Neo Fund excludes companies that deals weapon but it could be challenging to identify companies that are indirectly involved. GraphDB could easily explore complex relationships like this and help us identify potential risks that would've gone unnoticed otherwise.
 
 1. In Bloom, ask a question; "Show me top 10 companies we invest that are INDIRECTLY excluded by other funds for Weapons"
@@ -44,4 +50,10 @@ Neo Fund excludes companies that deals weapon but it could be challenging to ide
 2. "Show me the DIRECT exclusion connection" → China construction bank, Dongfeng motor group are high risk companies
 
 3. Expand on countries/industries for further insight
+
+### NeoDash dashboard
+
+![Neodash](images/Neodash.png)
+
+For monitoring and reporting purpose.
 

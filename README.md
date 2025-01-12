@@ -3,9 +3,9 @@
 Neo fund holds 5 portfolios;
 - ABORIGINAL AND TORRES STRAIT ISLANDER LAND AND SEA NEO FUND
 - DISASTER READY FUND
-- FUTURE FUND
-- MEDICAL RESEARCH FUTURE FUND
-- FUTURE DROUGHT FUND
+- NEO FUND
+- MEDICAL RESEARCH NEO FUND
+- NEO DROUGHT FUND
 
 Business problem statement: "As an investment/Compliance analyst, I want to find an efficient way to identify potential risks in our portfolios."
 
